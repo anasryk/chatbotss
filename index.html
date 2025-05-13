@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANAS AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="new-chat-btn" id="newChatBtn">
+                <i class="fas fa-plus"></i>
+                New Chat
+            </button>
+        </div>
+        <div class="chat-history" id="chatHistory">
+            <!-- Chat history items will be added here dynamically -->
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="main">
+        <div class="chat-header">
+            <button class="toggle-sidebar" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="model-selector">
+                <div class="model-status"></div>
+                <div class="model-name">ANAS AI Super</div>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <!-- Welcome screen shown when no chat is active -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h1 class="welcome-title">How can I help you today?</h1>
+                <p class="welcome-subtitle">Ask me anything about general knowledge, coding, creative writing, or
+                    problem-solving. I'm powered by ANAS AI to assist you.</p>
+                <div class="example-prompts">
+                    <div class="example-prompt"
+                        data-prompt="Write a short story about a robot discovering emotions for the first time.">
+                        <div class="example-prompt-title">Creative Writing</div>
+                        <div class="example-prompt-text">Write a short story about a robot discovering emotions for the
+                            first time.</div>
+                    </div>
+                    <div class="example-prompt"
+                        data-prompt="Explain how JavaScript promises work with a simple example.">
+                        <div class="example-prompt-title">Code Explanation</div>
+                        <div class="example-prompt-text">Explain how JavaScript promises work with a simple example.
+                        </div>
+                    </div>
+                    <div class="example-prompt"
+                        data-prompt="What are some effective strategies for improving time management?">
+                        <div class="example-prompt-title">Productivity Tips</div>
+                        <div class="example-prompt-text">What are some effective strategies for improving time
+                            management?</div>
+                    </div>
+                    <div class="example-prompt"
+                        data-prompt="I'm planning a 7-day trip to Japan. Can you suggest an itinerary?">
+                        <div class="example-prompt-title">Travel Planning</div>
+                        <div class="example-prompt-text">I'm planning a 7-day trip to Japan. Can you suggest an
+                            itinerary?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-box">
+                <textarea id="userInput" placeholder="Message ANAS AI..." rows="1"></textarea>
+                <div class="input-actions">
+                    <button class="attach-btn" id="attachBtn">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" multiple>
+                    <button class="send-btn" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="script.js"></script>
+
+
+</body>
+
+</html>
