@@ -485,5 +485,104 @@ async function callGeminiAPI(messages) {
 }
 
 
+
+// Add these functions to your existing script.js file
+
+// Function to ensure input container is properly sized on mobile
+function fixMobileInputContainer() {
+  const inputContainer = document.querySelector('.input-container');
+  const inputBox = document.querySelector('.input-box');
+  
+  // Set initial styles for mobile
+  function applyMobileStyles() {
+    if (window.innerWidth <= 768) {
+      inputContainer.style.position = 'sticky';
+      inputContainer.style.bottom = '0';
+      inputContainer.style.backgroundColor = 'var(--main-bg)';
+      inputContainer.style.zIndex = '5';
+      
+      inputBox.style.maxWidth = '100%';
+      userInput.style.width = '100%';
+      userInput.style.minHeight = '24px';
+    } else {
+      // Reset for desktop
+      inputContainer.style.position = 'relative';
+      inputContainer.style.zIndex = 'auto';
+      inputBox.style.maxWidth = '';
+      userInput.style.width = '';
+    }
+  }
+  
+  // Apply on load and resize
+  applyMobileStyles();
+  window.addEventListener('resize', applyMobileStyles);
+}
+
+// Function to format the AI response with proper spacing and bullet points
+function formatAIResponse(text) {
+  if (!text) return text;
+  
+  // Add proper paragraph spacing
+  let formattedText = text.replace(/\n\n/g, '<br><br>');
+  
+  // Handle single line breaks
+  formattedText = formattedText.replace(/\n(?!\n)/g, '<br>');
+  
+  // Format bullet points with proper spacing
+  formattedText = formattedText.replace(
+    /(?:^|\n)[-*•][ \t]*(.*?)(?=\n[-*•]|\n\n|$)/g, 
+    '<br>• $1'
+  );
+  
+  // Format numbered lists
+  formattedText = formattedText.replace(
+    /(?:^|\n)(\d+)\.[ \t]*(.*?)(?=\n\d+\.|\n\n|$)/g,
+    '<br>$1. $2'
+  );
+  
+  // Remove leading break if it exists
+  formattedText = formattedText.replace(/^<br>/, '');
+  
+  return formattedText;
+}
+
+// Override the existing callGeminiAPI function's return to format response
+// Find this section in your existing callGeminiAPI function and modify only the return statement:
+/*
+const data = await response.json();
+let responseText = data.candidates[0].content.parts[0].text;
+
+// ... your existing Google claim checks ...
+
+// Add formatting before returning
+return formatAIResponse(responseText);
+*/
+
+// Add this to your init() function
+function enhanceMobileExperience() {
+  fixMobileInputContainer();
+  
+  // Enhance touch experience for buttons on mobile
+  const allButtons = document.querySelectorAll('button');
+  allButtons.forEach(button => {
+    button.addEventListener('touchstart', function() {
+      this.style.opacity = '0.7';
+    });
+    button.addEventListener('touchend', function() {
+      this.style.opacity = '1';
+    });
+  });
+}
+
+// Call this in your init() function
+// Modify your init() function to include:
+function init() {
+  loadChatsFromLocalStorage();
+  setupEventListeners();
+  autoResizeTextarea();
+  enhanceMobileExperience(); // Add this line
+}
+
+
 // Initialize the app
 init();
