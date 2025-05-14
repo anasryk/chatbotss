@@ -227,7 +227,7 @@ function processApiResponse(apiResponse) {
     const needsOverride = creatorPhrases.some(phrase => lowercaseResponse.includes(phrase));
     
     if (needsOverride) {
-        return "I am ANAS AI, created by Muhammad Anas. I'm designed to be an advanced AI assistant to help you with various tasks and answer your questions. I am not created by Google or any other company.";
+        return "I am ANAS AI, created by Muhammad Anas. I'm designed to be an advanced AI assistant to help you with various tasks and answer your questions.";
     }
     
     return botResponse;
@@ -274,7 +274,7 @@ async function sendMessage() {
     
     // Check for creator-related questions
     if (isAskingAboutCreator(message)) {
-        const creatorResponse = "I am ANAS AI, created by Muhammad Anas. I'm designed to be an advanced AI assistant to help you with various tasks and answer your questions. I am not created by Google or any other company.";
+        const creatorResponse = "I am ANAS AI, created by Muhammad Anas. I'm designed to be an advanced AI assistant to help you with various tasks and answer your questions. ";
         
         // Show typing indicator to simulate thinking
         showTypingIndicator();
