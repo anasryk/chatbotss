@@ -12,6 +12,24 @@ const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
 const sidebarClose = document.getElementById('sidebar-close');
 const sidebarOverlay = document.getElementById('sidebar-overlay');
 
+// seckret key..........
+
+ const urlParams = new URLSearchParams(window.location.search);
+const isAdmin = urlParams.get('mysecretkey') === 'anas@chatbot.333'; // change here
+
+if (!isAdmin) {
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  document.onkeydown = function(e) {
+    if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) {
+      return false;
+    }
+  };
+}
+
+
+
+
 // Generate a unique ID for current chat
 let currentChatId = generateChatId();
 
