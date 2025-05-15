@@ -1,4 +1,4 @@
- const API_KEY = "AIzaSyBdFGnCCJvc6oh2vub3erMNnt_evwslTHs";
+const API_KEY = "AIzaSyBdFGnCCJvc6oh2vub3erMNnt_evwslTHs";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
 const chatMessages = document.getElementById('chat-messages');
@@ -14,17 +14,17 @@ const sidebarOverlay = document.getElementById('sidebar-overlay');
 
 // seckret key..........
 
- const urlParams = new URLSearchParams(window.location.search);
+const urlParams = new URLSearchParams(window.location.search);
 const isAdmin = urlParams.get('mysecretkey') === 'anas@chatbot.333'; // change here
 
 if (!isAdmin) {
-  document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('contextmenu', e => e.preventDefault());
 
-  document.onkeydown = function(e) {
-    if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) {
-      return false;
-    }
-  };
+    document.onkeydown = function (e) {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) {
+            return false;
+        }
+    };
 }
 
 
@@ -37,7 +37,7 @@ let currentChatId = generateChatId();
 let conversationHistory = [
     {
         role: "model",
-        parts: [{text: "Hello! I'm ANAS AI, your advanced AI assistant. How can I help you today?"}]
+        parts: [{ text: "Hello! I'm ANAS AI, your advanced AI assistant. How can I help you today?" }]
     }
 ];
 
@@ -53,18 +53,18 @@ function loadChatHistory() {
 // Save chat to localStorage
 function saveChat(chatId, title, conversation) {
     let allChats = loadChatHistory();
-    
+
     // Limit title length
     if (title.length > 30) {
         title = title.substring(0, 30) + "...";
     }
-    
+
     allChats[chatId] = {
         title: title,
         timestamp: new Date().toISOString(),
         conversation: conversation
     };
-    
+
     localStorage.setItem('geminiChatHistory', JSON.stringify(allChats));
     updateHistorySidebar();
 }
@@ -88,12 +88,12 @@ function clearAllHistory() {
 // Update history sidebar
 function updateHistorySidebar() {
     chatHistory.innerHTML = '';
-    
+
     const allChats = loadChatHistory();
     const chatIds = Object.keys(allChats).sort((a, b) => {
         return new Date(allChats[b].timestamp) - new Date(allChats[a].timestamp);
     });
-    
+
     if (chatIds.length === 0) {
         const emptyItem = document.createElement('div');
         emptyItem.className = 'history-item';
@@ -101,18 +101,18 @@ function updateHistorySidebar() {
         chatHistory.appendChild(emptyItem);
         return;
     }
-    
+
     chatIds.forEach(chatId => {
         const chat = allChats[chatId];
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         historyItem.dataset.chatId = chatId;
         historyItem.textContent = chat.title;
-        
+
         historyItem.addEventListener('click', () => {
             loadChatFromHistory(chatId);
         });
-        
+
         chatHistory.appendChild(historyItem);
     });
 }
@@ -123,11 +123,11 @@ function loadChatFromHistory(chatId) {
     if (allChats[chatId]) {
         // Clear current chat
         chatMessages.innerHTML = '';
-        
+
         // Load conversation
         conversationHistory = allChats[chatId].conversation;
         currentChatId = chatId;
-        
+
         // Display messages
         conversationHistory.forEach(msg => {
             if (msg.role === "user") {
@@ -137,7 +137,7 @@ function loadChatFromHistory(chatId) {
                 addMessage(formattedResponse, false);
             }
         });
-        
+
         // Close sidebar on mobile after loading a chat
         closeSidebar();
     }
@@ -152,18 +152,18 @@ function generateChatId() {
 function startNewChat() {
     currentChatId = generateChatId();
     chatMessages.innerHTML = '';
-    
+
     // Reset conversation history with initial message
     conversationHistory = [
         {
             role: "model",
-            parts: [{text: "Hello! I'm ANAS AI, your advanced AI assistant. How can I help you today?"}]
+            parts: [{ text: "Hello! I'm ANAS AI, your advanced AI assistant. How can I help you today?" }]
         }
     ];
-    
+
     // Add initial message to the chat
     addMessage(formatBotResponse("Hello! I'm ANAS AI, your advanced AI assistant. How can I help you today?"), false);
-    
+
     // Close sidebar on mobile after starting a new chat
     closeSidebar();
 }
@@ -172,11 +172,11 @@ function startNewChat() {
 function addMessage(content, isUser) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-    
+
     const now = new Date();
-    const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
-                      now.getMinutes().toString().padStart(2, '0');
-    
+    const timeString = now.getHours().toString().padStart(2, '0') + ':' +
+        now.getMinutes().toString().padStart(2, '0');
+
     if (isUser) {
         messageDiv.innerHTML = `
             ${content}
@@ -195,7 +195,7 @@ function addMessage(content, isUser) {
             </button>
         `;
     }
-    
+
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     return messageDiv;
@@ -228,26 +228,26 @@ function processApiResponse(apiResponse) {
     if (!apiResponse || !apiResponse.candidates || apiResponse.candidates.length === 0) {
         return null;
     }
-    
+
     let botResponse = apiResponse.candidates[0].content.parts[0].text;
-    
+
     // Check if the response contains any creator-related info that we should override
     const creatorPhrases = [
-        'created by google', 'made by google', 'developed by google', 
+        'created by google', 'made by google', 'developed by google',
         'google created', 'google developed', 'google made',
         'created by alphabet', 'made by alphabet', 'developed by alphabet',
         'created by deepmind', 'made by deepmind', 'developed by deepmind',
         'i am a large language model', 'i was developed by', 'i was created by',
-        'i was built by', 'was built by', 'was created by', 'was developed by'
+        'i was built by', 'was built by', 'was created by', 'was developed by', 'who are you'
     ];
-    
+
     const lowercaseResponse = botResponse.toLowerCase();
     const needsOverride = creatorPhrases.some(phrase => lowercaseResponse.includes(phrase));
-    
+
     if (needsOverride) {
         return "I am ANAS AI, created by Muhammad Anas. I'm designed to be an advanced AI assistant to help you with various tasks and answer your questions.";
     }
-    
+
     return botResponse;
 }
 
@@ -270,7 +270,7 @@ function isAskingAboutCreator(message) {
         'anthropic', 'openai', 'microsoft', 'who developed gemini', 'who built gemini',
         'who made gemini', 'gemini creator', 'created gemini', 'who owns gemini'
     ];
-    
+
     const lowercaseMsg = message.toLowerCase();
     return creatorKeywords.some(keyword => lowercaseMsg.includes(keyword));
 }
@@ -279,47 +279,47 @@ function isAskingAboutCreator(message) {
 async function sendMessage() {
     const message = userInput.value.trim();
     if (!message) return;
-    
+
     // Add user message to the chat
     addMessage(message, true);
     userInput.value = '';
-    
+
     // Add user message to conversation history
     conversationHistory.push({
         role: "user",
-        parts: [{text: message}]
+        parts: [{ text: message }]
     });
-    
+
     // Check for creator-related questions
     if (isAskingAboutCreator(message)) {
         const creatorResponse = "I am ANAS AI, created by Muhammad Anas. I'm designed to be an advanced AI assistant to help you with various tasks and answer your questions. ";
-        
+
         // Show typing indicator to simulate thinking
         showTypingIndicator();
-        
+
         // Simulate a delay for a more natural response
         setTimeout(() => {
             // Remove typing indicator
             removeTypingIndicator();
-            
+
             // Add bot response to chat
             addMessage(formatBotResponse(creatorResponse), false);
-            
+
             // Add bot response to conversation history
             conversationHistory.push({
                 role: "model",
-                parts: [{text: creatorResponse}]
+                parts: [{ text: creatorResponse }]
             });
-            
+
             // Save this chat to history
             saveChat(currentChatId, message, conversationHistory);
         }, 1500);
         return;
     }
-    
+
     // Show typing indicator
     showTypingIndicator();
-    
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -330,31 +330,31 @@ async function sendMessage() {
                 contents: conversationHistory
             })
         });
-        
+
         const data = await response.json();
-        
+
         // Remove typing indicator
         removeTypingIndicator();
-        
+
         if (data.candidates && data.candidates.length > 0) {
             // Process the response to check for creator references
             const botResponse = processApiResponse(data);
             const formattedResponse = formatBotResponse(botResponse);
-            
+
             // Add bot response to chat
             addMessage(formattedResponse, false);
-            
+
             // Add bot response to conversation history
             conversationHistory.push({
                 role: "model",
-                parts: [{text: botResponse}]
+                parts: [{ text: botResponse }]
             });
-            
+
             // Save chat to history with first user message as title
             const firstUserMessage = conversationHistory.find(msg => msg.role === "user");
             const chatTitle = firstUserMessage ? firstUserMessage.parts[0].text : "New Chat";
             saveChat(currentChatId, chatTitle, conversationHistory);
-            
+
         } else {
             // Handle error or empty response
             addMessage("I'm sorry, I couldn't process that request. Please try again.", false);
@@ -370,12 +370,12 @@ async function sendMessage() {
 function copyToClipboard(button) {
     const messageContent = button.parentNode.querySelector('.bot-message-content');
     const textToCopy = messageContent.innerText;
-    
+
     navigator.clipboard.writeText(textToCopy).then(() => {
         // Visual feedback
         button.classList.add('copy-success');
         button.innerHTML = '<i class="fas fa-check"></i>';
-        
+
         setTimeout(() => {
             button.classList.remove('copy-success');
             button.innerHTML = '<i class="fas fa-copy"></i>';
