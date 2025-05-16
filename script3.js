@@ -1,5 +1,15 @@
+// reserve java script 
+
+
+
+
+
+
+
+
 const API_KEY = "AIzaSyAhtrDLTpIZR8kmGp3KRi9QLBJz21Xk8gA";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+const MULTIMODAL_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-vision:generateContent?key=${API_KEY}`;
 
 const chatMessages = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
@@ -11,6 +21,30 @@ const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
 const sidebarClose = document.getElementById('sidebar-close');
 const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+// New UI elements for image upload and voice recognition
+const inputContainer = document.querySelector('.input-container');
+const imageUploadBtn = document.createElement('button');
+imageUploadBtn.className = 'feature-btn image-upload-btn';
+imageUploadBtn.innerHTML = '<i class="fas fa-image"></i>';
+imageUploadBtn.title = 'Upload an image';
+
+const voiceRecognitionBtn = document.createElement('button');
+voiceRecognitionBtn.className = 'feature-btn voice-recognition-btn';
+voiceRecognitionBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+voiceRecognitionBtn.title = 'Voice input';
+
+// Hidden file input for image upload
+const imageInput = document.createElement('input');
+imageInput.type = 'file';
+imageInput.accept = 'image/*';
+imageInput.style.display = 'none';
+imageInput.id = 'image-input';
+document.body.appendChild(imageInput);
+
+// Insert new buttons before the send button
+inputContainer.insertBefore(imageUploadBtn, sendButton);
+inputContainer.insertBefore(voiceRecognitionBtn, sendButton);
 
 // seckret key..........
 
@@ -27,11 +61,73 @@ if (!isAdmin) {
     };
 }
 
-
-
-
 // Generate a unique ID for current chat
 let currentChatId = generateChatId();
+
+// Variables for image handling
+let currentUploadedImage = null;
+let isRecording = false;
+let recognition = null;
+
+// Initialize speech recognition if available
+function initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = function() {
+            isRecording = true;
+            voiceRecognitionBtn.innerHTML = '<i class="fas fa-stop"></i>';
+            voiceRecognitionBtn.classList.add('recording');
+            // Add listening indicator in the chat
+            const listeningIndicator = document.createElement('div');
+            listeningIndicator.id = 'listening-indicator';
+            listeningIndicator.className = 'listening-indicator';
+            listeningIndicator.innerHTML = 'Listening...';
+            chatMessages.appendChild(listeningIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = Array.from(event.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('');
+            
+            userInput.value = transcript;
+        };
+
+        recognition.onend = function() {
+            isRecording = false;
+            voiceRecognitionBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            voiceRecognitionBtn.classList.remove('recording');
+            const listeningIndicator = document.getElementById('listening-indicator');
+            if (listeningIndicator) {
+                listeningIndicator.remove();
+            }
+            if (userInput.value.trim()) {
+                setTimeout(() => sendMessage(), 300); // Slight delay before sending to allow user to see what was transcribed
+            }
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
+            isRecording = false;
+            voiceRecognitionBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            voiceRecognitionBtn.classList.remove('recording');
+            const listeningIndicator = document.getElementById('listening-indicator');
+            if (listeningIndicator) {
+                listeningIndicator.remove();
+            }
+            addMessage("I couldn't hear you clearly. Please try again or type your message.", false);
+        };
+    } else {
+        voiceRecognitionBtn.style.display = 'none';
+        console.log('Speech recognition not supported in this browser.');
+    }
+}
 
 // Initial welcome message
 let conversationHistory = [
@@ -123,6 +219,7 @@ function loadChatFromHistory(chatId) {
     if (allChats[chatId]) {
         // Clear current chat
         chatMessages.innerHTML = '';
+        currentUploadedImage = null;
 
         // Load conversation
         conversationHistory = allChats[chatId].conversation;
@@ -131,7 +228,14 @@ function loadChatFromHistory(chatId) {
         // Display messages
         conversationHistory.forEach(msg => {
             if (msg.role === "user") {
-                addMessage(msg.parts[0].text, true);
+                if (msg.parts.length > 1 && msg.parts[1].inline_data) {
+                    // This is a message with an image
+                    const text = msg.parts[0].text;
+                    const imageData = msg.parts[1].inline_data.data;
+                    addMessage(text, true, imageData);
+                } else {
+                    addMessage(msg.parts[0].text, true);
+                }
             } else if (msg.role === "model") {
                 const formattedResponse = formatBotResponse(msg.parts[0].text);
                 addMessage(formattedResponse, false);
@@ -152,6 +256,7 @@ function generateChatId() {
 function startNewChat() {
     currentChatId = generateChatId();
     chatMessages.innerHTML = '';
+    currentUploadedImage = null;
 
     // Reset conversation history with initial message
     conversationHistory = [
@@ -169,7 +274,7 @@ function startNewChat() {
 }
 
 // Function to add a message to the chat
-function addMessage(content, isUser) {
+function addMessage(content, isUser, imageData = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
 
@@ -178,8 +283,17 @@ function addMessage(content, isUser) {
         now.getMinutes().toString().padStart(2, '0');
 
     if (isUser) {
+        let messageContent = content;
+        
+        // If there's an image, display it
+        if (imageData) {
+            messageContent += `<div class="user-image-container">
+                <img src="data:image/jpeg;base64,${imageData}" alt="Uploaded image" class="user-uploaded-image" />
+            </div>`;
+        }
+        
         messageDiv.innerHTML = `
-            ${content}
+            ${messageContent}
             <div class="message-time">${timeString}</div>
         `;
     } else {
@@ -275,20 +389,96 @@ function isAskingAboutCreator(message) {
     return creatorKeywords.some(keyword => lowercaseMsg.includes(keyword));
 }
 
-// Function to handle sending a message
+// Function to convert image to base64
+function imageToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            const base64String = reader.result.split(',')[1];
+            resolve(base64String);
+        };
+        reader.onerror = error => reject(error);
+    });
+}
+
+// Function to handle image upload
+async function handleImageUpload() {
+    try {
+        const file = imageInput.files[0];
+        if (!file) return;
+
+        // Check file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            addMessage("Image size exceeds 5MB limit. Please choose a smaller image.", false);
+            return;
+        }
+
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            addMessage("Please select a valid image file.", false);
+            return;
+        }
+
+        // Convert image to base64
+        const base64Image = await imageToBase64(file);
+        currentUploadedImage = base64Image;
+
+        // Show preview of the uploaded image
+        addMessage(`I've uploaded an image. What would you like to know about it?`, true, base64Image);
+
+        // Clear the file input
+        imageInput.value = '';
+    } catch (error) {
+        console.error('Error handling image upload:', error);
+        addMessage("There was an error processing your image. Please try again.", false);
+    }
+}
+
+// Function to toggle voice recognition
+function toggleVoiceRecognition() {
+    if (!recognition) {
+        initSpeechRecognition();
+    }
+    
+    if (isRecording) {
+        recognition.stop();
+    } else {
+        recognition.start();
+    }
+}
+
+// Function to handle sending a message with or without image
 async function sendMessage() {
     const message = userInput.value.trim();
-    if (!message) return;
+    if (!message && !currentUploadedImage) return;
 
     // Add user message to the chat
-    addMessage(message, true);
+    addMessage(message, true, currentUploadedImage);
     userInput.value = '';
+
+    // Prepare message parts for API
+    let messageParts = [{ text: message }];
+    
+    // Add image if available
+    if (currentUploadedImage) {
+        messageParts.push({
+            inline_data: {
+                mime_type: "image/jpeg",
+                data: currentUploadedImage
+            }
+        });
+    }
 
     // Add user message to conversation history
     conversationHistory.push({
         role: "user",
-        parts: [{ text: message }]
+        parts: messageParts
     });
+
+    // Clear current image after sending
+    const hadImage = currentUploadedImage !== null;
+    currentUploadedImage = null;
 
     // Check for creator-related questions
     if (isAskingAboutCreator(message)) {
@@ -321,7 +511,10 @@ async function sendMessage() {
     showTypingIndicator();
 
     try {
-        const response = await fetch(API_URL, {
+        // Choose API endpoint based on whether an image is included
+        const apiEndpoint = hadImage ? MULTIMODAL_API_URL : API_URL;
+        
+        const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -406,6 +599,14 @@ userInput.addEventListener('keypress', (e) => {
     }
 });
 
+imageUploadBtn.addEventListener('click', () => {
+    imageInput.click();
+});
+
+imageInput.addEventListener('change', handleImageUpload);
+
+voiceRecognitionBtn.addEventListener('click', toggleVoiceRecognition);
+
 newChatBtn.addEventListener('click', startNewChat);
 
 clearHistoryBtn.addEventListener('click', () => {
@@ -424,4 +625,10 @@ window.onload = () => {
     userInput.focus();
     // Load chat history into sidebar
     updateHistorySidebar();
+    // Initialize speech recognition if available
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        initSpeechRecognition();
+    } else {
+        voiceRecognitionBtn.style.display = 'none';
+    }
 };
